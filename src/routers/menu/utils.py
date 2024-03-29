@@ -15,7 +15,9 @@ from src.schemas.order import (
     AddNewItemByOrderIDSchema,
     CreateItemSchema,
     UpdateOrderStatusSchema,
-    TotalBillSchema, BillDetailSchema
+    TotalBillSchema, BillDetailSchema,
+    FoodDetailSchema, TotalFoodSchema
+    
 )
 from src.schemas.food import (
     food_schema,
@@ -70,10 +72,10 @@ async def upload_img(img: UploadFile) -> str:
     return file_name
 
 
-async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile):
+async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile, current_user : str):
     img_url = await upload_img(image)
     new_menu = Menu(
-        title=request_data.title.lower(), link=request_data.link, image_name=img_url
+        title=request_data.title.lower(), link=request_data.link, image_name=img_url, created_by=current_user
     )
     try:
         exist_menu = await Menu.find_one({"title":request_data.title.lower()})
@@ -417,6 +419,28 @@ async def get_my_order(current_user : str):
 
     return sorted_result
 
+#------------------------[get order by - order's owner & order's participants]--------------------------\
+async def get_my_order_expired(current_user : str):
+    result= []
+    order_list = Order.find({"created_by" : current_user, "status" : "expired"})
+    async for data in order_list:
+        result.append(data.model_dump())
+
+    order_list2 = Order.find({"created_by" : {"$ne": current_user}, "status" : "expired"})
+    async for data in order_list2:
+        dup_list = []
+        item_list : Item = []
+        item_list = data.item_list
+        for item_data in item_list:
+            if item_data.created_by == current_user:
+                result.append(data.model_dump())
+                break
+
+    sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)
+
+
+    return sorted_result
+
 
 async def get_order_created(current_user : str):
     result= []
@@ -531,6 +555,34 @@ async def do_delete_order_by_id_v2(order_id : str, current_user : str):
     await current_order.delete()
 #-----------------------------------------------------------------/
 
+#----------------------[Do delete food]-----------------------\
+async def do_delete_food_by_id(food_id : str, current_user : str):
+    current_food = await Food.find_one(Food.id == ObjectId(food_id))
+    if not current_food:
+        raise Exception("food not found")
+    
+    menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
+    if menu_info.created_by != current_user:
+        raise Exception("Not Menu's author") 
+
+    
+    await current_food.delete()
+#-----------------------------------------------------------------/
+    
+#----------------------[Do delete menu by title =ver2=]-----------------------\
+async def do_delete_menu_by_title_v2(menu_title : str, current_user : str):
+    current_menu = await Menu.find_one(Menu.title == menu_title)
+    if not current_menu:
+        raise ErrorResponseException(error="current menu not found")
+    if current_menu.created_by != current_user:
+        raise ErrorResponseException(error="not Menu's author")
+    menu_food = Food.find(Food.menu_title == current_menu.title)
+    async for data in menu_food:
+        await data.delete()
+
+    await current_menu.delete()
+#-----------------------------------------------------------------/
+
 
 #-------------[Do get order by id]----------------------------
 
@@ -625,6 +677,9 @@ async def set_expired_order():
 #-------------------------[get total bill by order id]-----------------------------\
 async def do_get_total_bill_order_by_order_id(order_id : str):
     current_order = await Order.find_one(Order.id == ObjectId(order_id))
+    if not current_order:
+        raise Exception("current order not found !")
+    
     result = TotalBillSchema(info=[], total_price=0)
     for item in current_order.item_list:
         current_item = BillDetailSchema(username=item.created_by,
@@ -635,7 +690,60 @@ async def do_get_total_bill_order_by_order_id(order_id : str):
         result.info.append(current_item)
         result.total_price = result.total_price + current_item.final_price
 
+    return result
+
+#----------------------------------------------------------------------------------/
+
+#-------------------------[get total Food bill by order id]-----------------------------\
+async def do_get_food_bill_order_by_order_id(order_id : str):
+    all_item = ItemOrder.find(ItemOrder.order_id==order_id)
+    if not all_item:
+        raise Exception("current order not found !")
+    
+    result = TotalFoodSchema(info=[], total_price=0)
+    dupfood= []
+    async for data in all_item:
+        if data.food not in dupfood:
+            result.info.append(FoodDetailSchema(
+                food_name=data.food,
+                price=data.price,
+                quantity=data.quantity,
+                note=[data.note],
+                final_price=data.price*data.quantity
+            ))
+            result.total_price = result.total_price + (data.price*data.quantity)
+            dupfood.append(data.food)
+        else:
+            pos = [x.food_name for x in result.info].index(data.food)
+            result.info[pos].quantity = result.info[pos].quantity + data.quantity
+            if data.note != "":
+                result.info[pos].note.append(data.note)
+            result.info[pos].final_price = result.info[pos].final_price + result.info[pos].price * data.quantity
+            result.total_price = result.total_price + (result.info[pos].price * data.quantity)
 
     return result
+#---------------------------------------------------------------------------------------/
+
+
+
+#-------------------------[get total bill by order id]-----------------------------\
+async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, username : str):
+    current_order = await Order.find_one(Order.id == ObjectId(order_id), Order.created_by == username)
+
+    if not current_order:
+        raise Exception("current order not found !")
+    
+    result = TotalBillSchema(info=[], total_price=0)
+    for item in current_order.item_list:
+        current_item = BillDetailSchema(username=item.created_by,
+                                        foodname=item.food,
+                                        quantity=item.quantity,
+                                        final_price=item.price * item.quantity
+                                        )
+        result.info.append(current_item)
+        result.total_price = result.total_price + current_item.final_price
+
+    return result
+
 
 #----------------------------------------------------------------------------------/

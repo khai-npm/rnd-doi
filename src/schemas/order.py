@@ -68,7 +68,7 @@ class AddNewItemByOrderIDSchema(BaseModel):
 class UpdateOrderStatusSchema(BaseModel):
     order_id : str
 
-
+#-----------------------------------
 class BillDetailSchema(BaseModel):
     username : str
     foodname : str
@@ -78,3 +78,17 @@ class BillDetailSchema(BaseModel):
 class TotalBillSchema(BaseModel):
     info : list[BillDetailSchema]
     total_price : int
+#-----------------------------------
+class FoodDetailSchema(BaseModel):
+    food_name : str
+    price : int
+    quantity : int
+    note: list[str]
+    final_price : int
+
+class TotalFoodSchema(BaseModel):
+    info : list[FoodDetailSchema]
+    total_price : int
+
+    
+
