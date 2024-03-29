@@ -39,6 +39,7 @@ from src.routers.menu.utils import (
     do_get_total_bill_order_by_order_id,
     do_get_food_bill_order_by_order_id,
     do_get_personal_bill_order_by_order_id_and_username,
+    do_delete_food_by_id,
     # get_food_by_menu_from_order
 )
 
@@ -218,7 +219,22 @@ async def delete_order_by_id(order_id: str, current_user:str = Depends(get_curre
         return {"success" : False, "error" : str(e)}
     
     return {"data" : []}
-#--------------------------------------------------------------------    
+#-------------------------------------------------------------------- 
+
+#--------------------[delete food by id - v2]----------------------    
+@menu_router.delete(
+    "/delete_food/{food_id}",
+    dependencies=[Depends(jwt_validator)],
+     response_model=ApiResponse
+)
+async def delete_food_by_id(food_id: str):
+    try:
+        await do_delete_food_by_id(food_id)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
+#--------------------------------------------------------------------   
 
 @menu_router.delete(
     "/delete_item/{item_id}",

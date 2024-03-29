@@ -555,6 +555,15 @@ async def do_delete_order_by_id_v2(order_id : str, current_user : str):
     await current_order.delete()
 #-----------------------------------------------------------------/
 
+#----------------------[Do delete food]-----------------------\
+async def do_delete_food_by_id(food_id : str):
+    current_food = await Food.find_one(Food.id == ObjectId(food_id))
+    if not current_food:
+        raise Exception("food not found")
+    
+    await current_food.delete()
+#-----------------------------------------------------------------/
+
 
 #-------------[Do get order by id]----------------------------
 
@@ -716,5 +725,6 @@ async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, us
         result.total_price = result.total_price + current_item.final_price
 
     return result
+
 
 #----------------------------------------------------------------------------------/
