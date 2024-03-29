@@ -288,8 +288,9 @@ async def routing_update_order_status(request_data : UpdateOrderStatusSchema, cu
 )
 
 async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_form)
-                           , image: UploadFile = File(...),):
-    result = await add_new_food(request_data, image)
+                           , image: UploadFile = File(...),
+                           current_user:str = Depends(get_current_user)):
+    result = await add_new_food(request_data, image, current_user)
 
     return {"data" : [result]}
 

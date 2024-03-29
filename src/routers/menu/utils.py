@@ -331,23 +331,30 @@ async def get_order_v2(current_user : str, current_area : int):
 
 
 #----------[add new food]--------------------
-async def add_new_food(request_data : food_schema, img : UploadFile):
-    img_url = await upload_img(img)
-    new_food = Food(
+async def add_new_food(request_data : food_schema, img : UploadFile, current_user : str):
+
+
+
+    try:
+        exist_menu = await Menu.find_one({"title" : request_data.menu_title})
+        if not exist_menu:
+            raise ValueError("Menu not exist !")
+        
+        if exist_menu.created_by != current_user:
+            raise ValueError("")
+
+        exist_food = await Food.find_one({"food_name" : request_data.food_name,
+                                          "menu_title" : request_data.menu_title})
+        if exist_food:
+            raise ValueError("food already exist !")
+        img_url = await upload_img(img)
+        new_food = Food(
         food_name= request_data.food_name,
         price=request_data.price,
         ingredients= request_data.ingredients,
         menu_title=request_data.menu_title,
         image_url=img_url
     )
-    try:
-        exist_menu = await Menu.find_one({"title" : request_data.menu_title})
-        if not exist_menu:
-            raise ValueError("Menu not exist !")
-        exist_food = await Food.find_one({"food_name" : request_data.food_name,
-                                          "menu_title" : request_data.menu_title})
-        if exist_food:
-            raise ValueError("food already exist !")
         await new_food.insert()
 
     except Exception as e:
