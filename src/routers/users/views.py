@@ -156,6 +156,8 @@ async def update_password(request_data : UpdatePasswordSchema, current_user:str 
 )
 async def get_user_img(current_user:str = Depends(get_current_user)):
     current_user_info = await User.find_one({"username" : current_user})
+    if current_user_info.img_url == "" : 
+        return {"data" : []}
     img_url = await get_image_of_menu(current_user_info.img_url)
     return {"data" : [img_url]}
     

@@ -72,10 +72,10 @@ async def upload_img(img: UploadFile) -> str:
     return file_name
 
 
-async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile):
+async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile, current_user : str):
     img_url = await upload_img(image)
     new_menu = Menu(
-        title=request_data.title.lower(), link=request_data.link, image_name=img_url
+        title=request_data.title.lower(), link=request_data.link, image_name=img_url, created_by=current_user
     )
     try:
         exist_menu = await Menu.find_one({"title":request_data.title.lower()})
@@ -556,12 +556,31 @@ async def do_delete_order_by_id_v2(order_id : str, current_user : str):
 #-----------------------------------------------------------------/
 
 #----------------------[Do delete food]-----------------------\
-async def do_delete_food_by_id(food_id : str):
+async def do_delete_food_by_id(food_id : str, current_user : str):
     current_food = await Food.find_one(Food.id == ObjectId(food_id))
     if not current_food:
         raise Exception("food not found")
     
+    menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
+    if menu_info.created_by != current_user:
+        raise Exception("Not Menu's author") 
+
+    
     await current_food.delete()
+#-----------------------------------------------------------------/
+    
+#----------------------[Do delete menu by title =ver2=]-----------------------\
+async def do_delete_menu_by_title_v2(menu_title : str, current_user : str):
+    current_menu = await Menu.find_one(Menu.title == menu_title)
+    if not current_menu:
+        raise ErrorResponseException(error="current menu not found")
+    if current_menu.created_by != current_user:
+        raise ErrorResponseException(error="not Menu's author")
+    menu_food = Food.find(Food.menu_title == current_menu.title)
+    async for data in menu_food:
+        await data.delete()
+
+    await current_menu.delete()
 #-----------------------------------------------------------------/
 
 

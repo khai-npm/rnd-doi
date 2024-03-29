@@ -40,6 +40,7 @@ from src.routers.menu.utils import (
     do_get_food_bill_order_by_order_id,
     do_get_personal_bill_order_by_order_id_and_username,
     do_delete_food_by_id,
+    do_delete_menu_by_title_v2
     # get_food_by_menu_from_order
 )
 
@@ -63,8 +64,9 @@ async def up_image(image: UploadFile = File(...)):
 async def create_menu(
     request_data: CreateMenuSchema = Depends(CreateMenuSchema.as_form),
     image: UploadFile = File(...),
+    current_user:str = Depends(get_current_user)
 ):
-    result = await create_new_menu(request_data, image)
+    result = await create_new_menu(request_data, image, current_user)
     return {"data": [result]}
 
 
@@ -187,13 +189,15 @@ async def add_new_item(request_data: AddNewItemSchema):
     return {"data": [result]}
 
 @menu_router.delete(
-    "/{title}", dependencies=[Depends(jwt_validator)], status_code=status.HTTP_200_OK
+    "/delete_menu/{title}", dependencies=[Depends(jwt_validator)],response_model=ApiResponse
 )
-async def delete_menu_by_title(title: str) -> dict:
-    menu = await Menu.find_one({"title": title})
-    if menu is not None:
-        await menu.delete()
-        return menu.model_dump()
+async def delete_menu_by_title(title: str, current_user:str = Depends(get_current_user)): 
+    try:
+
+        await do_delete_menu_by_title_v2(title, current_user)
+
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
 
 
 @menu_router.delete(
