@@ -341,7 +341,7 @@ async def add_new_food(request_data : food_schema, img : UploadFile, current_use
             raise ValueError("Menu not exist !")
         
         if exist_menu.created_by != current_user:
-            raise ValueError("")
+            raise ValueError("Not Menu's author")
 
         exist_food = await Food.find_one({"food_name" : request_data.food_name,
                                           "menu_title" : request_data.menu_title})
