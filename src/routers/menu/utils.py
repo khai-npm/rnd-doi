@@ -479,6 +479,20 @@ async def get_order_joined(current_user : str):
 
 #-------------------------------------------------------------------------------------------------------/
 
+#-------------------------[reverse get_my_order]-----------------------
+async def reverse_get_my_order(current_user : str):
+    result = []
+    all_order = Order.find()
+    not_result = await get_my_order(current_user)
+
+    async for data in all_order:
+        if data.model_dump() not in not_result:
+            result.append(data.model_dump())
+
+    sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)
+    return sorted_result
+#----------------------------------------------------------------------
+
 #---------------[get food by menu title]---------------------
 async def get_food_by_menu_title(request_title: str):
     return_data = []
@@ -706,7 +720,7 @@ async def do_get_food_bill_order_by_order_id(order_id : str):
     all_item = ItemOrder.find(ItemOrder.order_id==order_id)
     if not all_item:
         raise Exception("current order not found !")
-    
+
     result = TotalFoodSchema(info=[], total_price=0)
     dupfood= []
     async for data in all_item:

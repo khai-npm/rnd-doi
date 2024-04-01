@@ -40,7 +40,8 @@ from src.routers.menu.utils import (
     do_get_food_bill_order_by_order_id,
     do_get_personal_bill_order_by_order_id_and_username,
     do_delete_food_by_id,
-    do_delete_menu_by_title_v2
+    do_delete_menu_by_title_v2,
+    reverse_get_my_order
     # get_food_by_menu_from_order
 )
 
@@ -93,6 +94,16 @@ async def get_all_order():
 async def get_order_by_user(current_user:str = Depends(get_current_user), current_area: int = Depends(get_current_area)):
     await set_expired_order()
     result = await get_order_v2(current_user, current_area)
+    return {"data": result}
+#----------------------------------------------
+
+#-------------------[new get order]------------
+@menu_router.get(
+    "/get_user_order/not_joined", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def get_order_by_user(current_user:str = Depends(get_current_user)):
+    await set_expired_order()
+    result = await reverse_get_my_order(current_user)
     return {"data": result}
 #----------------------------------------------
 
