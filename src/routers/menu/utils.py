@@ -735,20 +735,21 @@ async def do_get_food_bill_order_by_order_id(order_id : str):
 
 #-------------------------[get total bill by order id]-----------------------------\
 async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, username : str):
-    current_order = await Order.find_one(Order.id == ObjectId(order_id), Order.created_by == username)
+    current_order = await Order.find_one(Order.id == ObjectId(order_id))
 
     if not current_order:
         raise Exception("current order not found !")
     
     result = TotalBillSchema(info=[], total_price=0)
     for item in current_order.item_list:
-        current_item = BillDetailSchema(username=item.created_by,
-                                        foodname=item.food,
-                                        quantity=item.quantity,
-                                        final_price=item.price * item.quantity
-                                        )
-        result.info.append(current_item)
-        result.total_price = result.total_price + current_item.final_price
+        if item.created_by == username:
+            current_item = BillDetailSchema(username=item.created_by,
+                                            foodname=item.food,
+                                            quantity=item.quantity,
+                                            final_price=item.price * item.quantity
+                                            )
+            result.info.append(current_item)
+            result.total_price = result.total_price + current_item.final_price
 
     return result
 
