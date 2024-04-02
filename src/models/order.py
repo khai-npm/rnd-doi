@@ -6,6 +6,8 @@ from pydantic import BaseModel
 class Menu(Document):
     title: Indexed(str, unique=True) # type: ignore
     created_by : str
+    created_at : datetime
+    last_modify : datetime
     link: str
     image_name: str
 

@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, UploadFile, Depends, File, status
+from fastapi import APIRouter, Form, UploadFile, Depends, File, status
 from src.schemas.response import ApiResponse
 from src.schemas.order import (
     CreateMenuSchema,
@@ -45,7 +45,9 @@ from src.routers.menu.utils import (
     do_delete_food_by_id,
     do_delete_menu_by_title_v2,
     reverse_get_my_order,
-    do_get_menu_detail_for_admin
+    do_get_menu_detail_for_admin,
+    do_update_menu_image_by_title,
+    do_update_menu_info_by_title
     # get_food_by_menu_from_order
 )
 
@@ -68,11 +70,33 @@ async def up_image(image: UploadFile = File(...)):
 )
 async def create_menu(
     request_data: CreateMenuSchema = Depends(CreateMenuSchema.as_form),
-    image: UploadFile = File(...),
+    # image: UploadFile = File(...),
     current_user:str = Depends(get_current_user)
 ):
-    result = await create_new_menu(request_data, image, current_user)
+    result = await create_new_menu(request_data, current_user)
     return {"data": [result]}
+
+@menu_router.put(
+    "/update_menu/image" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def update_menu_image(id : str = Form(...), image : UploadFile = File(...)):
+    try:
+        await do_update_menu_image_by_title(menu_id=id, image=image)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
+
+@menu_router.put(
+    "/update_menu/" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def update_menu_by_id(id : str = Form(...), new_title : str = Form(...), new_link : str = Form(...)):
+    try:
+        await do_update_menu_info_by_title(menu_id=id, new_link=new_link, new_title=new_title)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
 
 
 @menu_router.post(

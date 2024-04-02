@@ -75,10 +75,11 @@ async def upload_img(img: UploadFile) -> str:
     return file_name
 
 
-async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile, current_user : str):
-    img_url = await upload_img(image)
+async def create_new_menu(request_data: CreateMenuSchema, current_user : str):
+    # img_url = await upload_img(image)
     new_menu = Menu(
-        title=request_data.title.lower(), link=request_data.link, image_name=img_url, created_by=current_user
+        title=request_data.title.lower(), link=request_data.link, image_name="", created_by=current_user,
+        created_at=datetime.datetime.now(), last_modify=datetime.datetime.now()
     )
     try:
         exist_menu = await Menu.find_one({"title":request_data.title.lower()})
@@ -179,6 +180,8 @@ async def get_menu():
 
 
 async def get_image_of_menu(request_data: str):
+    if request_data == "":
+        return ""
     if not request_data:
         file_object = io.open("src/data/default_logo.png", "rb", 0)
         file_extension = "png"
@@ -789,3 +792,37 @@ async def do_get_menu_detail_for_admin():
 
     return result
 #--------------------------------------------------------------------------------
+
+#--------------------------------[Update Menu Info]----------------------------------
+async def do_update_menu_info_by_title(menu_id: str, new_title : str, new_link : str):
+    current_menu = await Menu.find_one(Menu.id==ObjectId(menu_id))
+    if not current_menu:
+        raise ErrorResponseException(error="Menu not found by title !")
+    
+    depend_food = Food.find(Food.menu_title == current_menu.title)
+    print(depend_food)
+    await depend_food.update_many({}, {"$set":{Food.menu_title : new_title}})
+
+    depend_order = Order.find(Order.menu == current_menu.title)
+    print(depend_order)
+    await depend_order.update_many({}, {"$set":{Order.menu : new_title}})
+    
+    current_menu.title = new_title
+    current_menu.link = new_link
+    await current_menu.save()
+    
+    
+#-------------------------------------------------------------------------------------
+
+#--------------------------------[Update Menu Image]----------------------------------
+async def do_update_menu_image_by_title(menu_id: str, image : UploadFile):
+    current_menu = await Menu.find_one(Menu.id==ObjectId(menu_id))
+    if not current_menu:
+        raise ErrorResponseException(error="Menu not found by title !")
+    
+    img_url = await upload_img(image)
+    current_menu.image_name = img_url
+    await current_menu.save()
+    
+    
+#-------------------------------------------------------------------------------------
