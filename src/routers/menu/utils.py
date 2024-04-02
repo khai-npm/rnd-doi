@@ -19,6 +19,9 @@ from src.schemas.order import (
     FoodDetailSchema, TotalFoodSchema
     
 )
+from src.schemas.admin import (
+    AdminMenuDetailSchema,
+)
 from src.schemas.food import (
     food_schema,
     AddNewItemSchemaV3,
@@ -769,3 +772,20 @@ async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, us
 
 
 #----------------------------------------------------------------------------------/
+
+
+#------------------------------[Get Menu Detail - admin ver]---------------------
+async def do_get_menu_detail_for_admin():
+    result : list[AdminMenuDetailSchema] = []
+    all_menu = Menu.find()
+    async for data in all_menu:
+        food_count = Food.find(Food.menu_title==data.title)
+        order_count = Order.find(Order.menu==data.title)
+        
+        get_data = AdminMenuDetailSchema(menu_title=data.title, 
+                                         order_count=await order_count.count(), 
+                                         food_count=await food_count.count())
+        result.append(get_data)
+
+    return result
+#--------------------------------------------------------------------------------

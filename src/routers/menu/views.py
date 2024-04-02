@@ -11,6 +11,9 @@ from src.schemas.order import (
     UpdateOrderStatusSchema
     
 )
+from src.schemas.admin import (
+    AdminMenuDetailSchema,
+    )
 from src.schemas.food import food_schema, AddNewItemSchemaV3
 from src.models.food import Food
 from src.routers.menu.utils import (
@@ -41,11 +44,12 @@ from src.routers.menu.utils import (
     do_get_personal_bill_order_by_order_id_and_username,
     do_delete_food_by_id,
     do_delete_menu_by_title_v2,
-    reverse_get_my_order
+    reverse_get_my_order,
+    do_get_menu_detail_for_admin
     # get_food_by_menu_from_order
 )
 
-from src.auth.auth_bearer import jwt_validator, get_current_user, get_current_area
+from src.auth.auth_bearer import jwt_validator, get_current_user, get_current_area, jwt_validator_admin
 from src.models.order import Menu, Order, Item
 
 menu_router = APIRouter(prefix="/api/menu", tags=["Menu"])
@@ -98,7 +102,7 @@ async def get_order_by_user(current_user:str = Depends(get_current_user), curren
 #----------------------------------------------
 
 #-------------------[new get order]------------
-@menu_router.get(
+@menu_router.post(
     "/get_user_order/not_joined", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
 async def get_order_by_user(current_user:str = Depends(get_current_user)):
@@ -382,6 +386,22 @@ async def get_personal_bill_order_by_order_id_and_username(order_id : str, curre
     
     return {"data" : [result]}
 #---------------------------------------------------------------------------------------------------
+
+
+#---------------------------------[Admin Only Dashboard function update]--------------------------------
+@menu_router.get(
+    "/admin/menu_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+)
+async def get_menu_detail_admin():
+    try:
+
+        result = await do_get_menu_detail_for_admin()
+    
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : result}
+#-------------------------------------------------------------------------------------------------------
     
 
 
