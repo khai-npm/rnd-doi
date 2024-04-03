@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, UploadFile, Depends, File, status
+from fastapi import APIRouter, Form, UploadFile, Depends, File, status
 from src.schemas.response import ApiResponse
 from src.schemas.order import (
     CreateMenuSchema,
@@ -11,6 +11,9 @@ from src.schemas.order import (
     UpdateOrderStatusSchema
     
 )
+from src.schemas.admin import (
+    AdminMenuDetailSchema,
+    )
 from src.schemas.food import food_schema, AddNewItemSchemaV3
 from src.models.food import Food
 from src.routers.menu.utils import (
@@ -41,11 +44,15 @@ from src.routers.menu.utils import (
     do_get_personal_bill_order_by_order_id_and_username,
     do_delete_food_by_id,
     do_delete_menu_by_title_v2,
-    reverse_get_my_order
+    reverse_get_my_order,
+    do_get_menu_detail_for_admin,
+    do_update_menu_image_by_title,
+    do_update_menu_info_by_title,
+    add_image_to_food
     # get_food_by_menu_from_order
 )
 
-from src.auth.auth_bearer import jwt_validator, get_current_user, get_current_area
+from src.auth.auth_bearer import jwt_validator, get_current_user, get_current_area, jwt_validator_admin
 from src.models.order import Menu, Order, Item
 
 menu_router = APIRouter(prefix="/api/menu", tags=["Menu"])
@@ -64,11 +71,33 @@ async def up_image(image: UploadFile = File(...)):
 )
 async def create_menu(
     request_data: CreateMenuSchema = Depends(CreateMenuSchema.as_form),
-    image: UploadFile = File(...),
+    # image: UploadFile = File(...),
     current_user:str = Depends(get_current_user)
 ):
-    result = await create_new_menu(request_data, image, current_user)
+    result = await create_new_menu(request_data, current_user)
     return {"data": [result]}
+
+@menu_router.put(
+    "/update_menu/image" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def update_menu_image(id : str = Form(...), image : UploadFile = File(...)):
+    try:
+        await do_update_menu_image_by_title(menu_id=id, image=image)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
+
+@menu_router.put(
+    "/update_menu/" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def update_menu_by_id(id : str = Form(...), new_title : str = Form(...), new_link : str = Form(...)):
+    try:
+        await do_update_menu_info_by_title(menu_id=id, new_link=new_link, new_title=new_title)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
 
 
 @menu_router.post(
@@ -98,7 +127,7 @@ async def get_order_by_user(current_user:str = Depends(get_current_user), curren
 #----------------------------------------------
 
 #-------------------[new get order]------------
-@menu_router.get(
+@menu_router.post(
     "/get_user_order/not_joined", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
 async def get_order_by_user(current_user:str = Depends(get_current_user)):
@@ -298,10 +327,21 @@ async def routing_update_order_status(request_data : UpdateOrderStatusSchema, cu
     response_model=ApiResponse
 )
 
-async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_form)
-                           , image: UploadFile = File(...),
+async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_form),
+                        #    image: UploadFile = File(...),
                            current_user:str = Depends(get_current_user)):
-    result = await add_new_food(request_data, image, current_user)
+    result = await add_new_food(request_data, current_user)
+
+    return {"data" : [result]}
+
+@menu_router.put(
+    "/add_new_food/image",
+    dependencies=[Depends(jwt_validator)],
+    response_model=ApiResponse
+)
+
+async def add_food_by_menu(food_id : str = Form(...), image : UploadFile = File(...)):
+    result = await add_image_to_food(food_id, image)
 
     return {"data" : [result]}
 
@@ -382,6 +422,22 @@ async def get_personal_bill_order_by_order_id_and_username(order_id : str, curre
     
     return {"data" : [result]}
 #---------------------------------------------------------------------------------------------------
+
+
+#---------------------------------[Admin Only Dashboard function update]--------------------------------
+@menu_router.get(
+    "/admin/menu_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+)
+async def get_menu_detail_admin():
+    try:
+
+        result = await do_get_menu_detail_for_admin()
+    
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : result}
+#-------------------------------------------------------------------------------------------------------
     
 
 

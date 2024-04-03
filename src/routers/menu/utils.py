@@ -19,6 +19,9 @@ from src.schemas.order import (
     FoodDetailSchema, TotalFoodSchema
     
 )
+from src.schemas.admin import (
+    AdminMenuDetailSchema,
+)
 from src.schemas.food import (
     food_schema,
     AddNewItemSchemaV3,
@@ -72,10 +75,11 @@ async def upload_img(img: UploadFile) -> str:
     return file_name
 
 
-async def create_new_menu(request_data: CreateMenuSchema, image: UploadFile, current_user : str):
-    img_url = await upload_img(image)
+async def create_new_menu(request_data: CreateMenuSchema, current_user : str):
+    # img_url = await upload_img(image)
     new_menu = Menu(
-        title=request_data.title.lower(), link=request_data.link, image_name=img_url, created_by=current_user
+        title=request_data.title.lower(), link=request_data.link, image_name="", created_by=current_user,
+        created_at=datetime.datetime.now(), last_modify=datetime.datetime.now()
     )
     try:
         exist_menu = await Menu.find_one({"title":request_data.title.lower()})
@@ -176,6 +180,8 @@ async def get_menu():
 
 
 async def get_image_of_menu(request_data: str):
+    if request_data == "":
+        return ""
     if not request_data:
         file_object = io.open("src/data/default_logo.png", "rb", 0)
         file_extension = "png"
@@ -331,7 +337,7 @@ async def get_order_v2(current_user : str, current_area : int):
 
 
 #----------[add new food]--------------------
-async def add_new_food(request_data : food_schema, img : UploadFile, current_user : str):
+async def add_new_food(request_data : food_schema, current_user : str):
 
 
 
@@ -340,20 +346,20 @@ async def add_new_food(request_data : food_schema, img : UploadFile, current_use
         if not exist_menu:
             raise ValueError("Menu not exist !")
         
-        if exist_menu.created_by != current_user:
-            raise ValueError("Not Menu's author")
+        # if exist_menu.created_by != current_user:
+        #     raise ValueError("Not Menu's author")
 
         exist_food = await Food.find_one({"food_name" : request_data.food_name,
                                           "menu_title" : request_data.menu_title})
         if exist_food:
             raise ValueError("food already exist !")
-        img_url = await upload_img(img)
+        # img_url = await upload_img(img)
         new_food = Food(
         food_name= request_data.food_name,
         price=request_data.price,
         ingredients= request_data.ingredients,
         menu_title=request_data.menu_title,
-        image_url=img_url
+        image_url=""
     )
         await new_food.insert()
 
@@ -364,6 +370,20 @@ async def add_new_food(request_data : food_schema, img : UploadFile, current_use
     
     return new_food.model_dump()
 #--------------------------------------------
+
+#----------[add image to food]--------------------
+async def add_image_to_food(food_id : str, image : UploadFile):
+    current_food = await Food.find_one(Food.id == ObjectId(food_id))
+    if not current_food:
+        raise Exception("food not found with thisn id")
+
+    img_name = upload_img(image)
+    current_food.image_url = img_name
+    await current_food.save()
+
+    return current_food.model_dump()
+
+#-------------------------------------------------
 
 
 #----------[Get All Food]--------------------
@@ -769,3 +789,55 @@ async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, us
 
 
 #----------------------------------------------------------------------------------/
+
+
+#------------------------------[Get Menu Detail - admin ver]---------------------
+async def do_get_menu_detail_for_admin():
+    result : list[AdminMenuDetailSchema] = []
+    all_menu = Menu.find()
+    async for data in all_menu:
+        food_count = Food.find(Food.menu_title==data.title)
+        order_count = Order.find(Order.menu==data.title)
+        
+        get_data = AdminMenuDetailSchema(menu_title=data.title, 
+                                         order_count=await order_count.count(), 
+                                         food_count=await food_count.count())
+        result.append(get_data)
+
+    return result
+#--------------------------------------------------------------------------------
+
+#--------------------------------[Update Menu Info]----------------------------------
+async def do_update_menu_info_by_title(menu_id: str, new_title : str, new_link : str):
+    current_menu = await Menu.find_one(Menu.id==ObjectId(menu_id))
+    if not current_menu:
+        raise ErrorResponseException(error="Menu not found by title !")
+    
+    depend_food = Food.find(Food.menu_title == current_menu.title)
+    print(depend_food)
+    await depend_food.update_many({}, {"$set":{Food.menu_title : new_title}})
+
+    depend_order = Order.find(Order.menu == current_menu.title)
+    print(depend_order)
+    await depend_order.update_many({}, {"$set":{Order.menu : new_title}})
+    
+    current_menu.title = new_title
+    current_menu.link = new_link
+    current_menu.last_modify = datetime.datetime.now()
+    await current_menu.save()
+    
+    
+#-------------------------------------------------------------------------------------
+
+#--------------------------------[Update Menu Image]----------------------------------
+async def do_update_menu_image_by_title(menu_id: str, image : UploadFile):
+    current_menu = await Menu.find_one(Menu.id==ObjectId(menu_id))
+    if not current_menu:
+        raise ErrorResponseException(error="Menu not found by title !")
+    
+    img_url = await upload_img(image)
+    current_menu.image_name = img_url
+    await current_menu.save()
+    
+    
+#-------------------------------------------------------------------------------------
