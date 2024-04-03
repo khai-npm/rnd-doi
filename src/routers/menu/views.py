@@ -47,7 +47,8 @@ from src.routers.menu.utils import (
     reverse_get_my_order,
     do_get_menu_detail_for_admin,
     do_update_menu_image_by_title,
-    do_update_menu_info_by_title
+    do_update_menu_info_by_title,
+    add_image_to_food
     # get_food_by_menu_from_order
 )
 
@@ -326,10 +327,21 @@ async def routing_update_order_status(request_data : UpdateOrderStatusSchema, cu
     response_model=ApiResponse
 )
 
-async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_form)
-                           , image: UploadFile = File(...),
+async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_form),
+                        #    image: UploadFile = File(...),
                            current_user:str = Depends(get_current_user)):
-    result = await add_new_food(request_data, image, current_user)
+    result = await add_new_food(request_data, current_user)
+
+    return {"data" : [result]}
+
+@menu_router.put(
+    "/add_new_food/image",
+    dependencies=[Depends(jwt_validator)],
+    response_model=ApiResponse
+)
+
+async def add_food_by_menu(food_id : str = Form(...), image : UploadFile = File(...)):
+    result = await add_image_to_food(food_id, image)
 
     return {"data" : [result]}
 
