@@ -501,13 +501,13 @@ async def get_order_joined(current_user : str):
 #-------------------------------------------------------------------------------------------------------/
 
 #-------------------------[reverse get_my_order]-----------------------
-async def reverse_get_my_order(current_user : str):
+async def reverse_get_my_order(current_user : str, current_area : int):
     result = []
     all_order = Order.find()
     not_result = await get_my_order(current_user)
 
     async for data in all_order:
-        if data.model_dump() not in not_result:
+        if data.model_dump() not in not_result and data.status == "active" and data.area == current_area:
             result.append(data.model_dump())
 
     sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)

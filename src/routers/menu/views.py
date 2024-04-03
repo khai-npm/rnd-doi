@@ -131,9 +131,9 @@ async def get_order_by_user(current_user:str = Depends(get_current_user), curren
 @menu_router.post(
     "/get_user_order/not_joined", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
-async def get_order_by_user(current_user:str = Depends(get_current_user)):
+async def get_order_by_user(current_user:str = Depends(get_current_user), current_area: int = Depends(get_current_area)):
     await set_expired_order()
-    result = await reverse_get_my_order(current_user)
+    result = await reverse_get_my_order(current_user, current_area)
     return {"data": result}
 #----------------------------------------------
 
