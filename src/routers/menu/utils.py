@@ -21,6 +21,7 @@ from src.schemas.order import (
 )
 from src.schemas.admin import (
     AdminMenuDetailSchema,
+    AdminOverallDataSchema
 )
 from src.schemas.food import (
     food_schema,
@@ -841,3 +842,17 @@ async def do_update_menu_image_by_title(menu_id: str, image : UploadFile):
     
     
 #-------------------------------------------------------------------------------------
+    
+#--------------------------------------[Admin - view data count]-----------------------------
+async def do_get_overall_data_for_admin():
+    result = AdminOverallDataSchema(
+        user_count=await User.count(),
+        food_count=await Food.count(),
+        menu_count=await Menu.count(),
+        order_count=await Order.count()
+    )
+    return result
+
+#--------------------------------------------------------------------------------------------
+
+

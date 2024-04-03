@@ -48,7 +48,8 @@ from src.routers.menu.utils import (
     do_get_menu_detail_for_admin,
     do_update_menu_image_by_title,
     do_update_menu_info_by_title,
-    add_image_to_food
+    add_image_to_food,
+    do_get_overall_data_for_admin
     # get_food_by_menu_from_order
 )
 
@@ -437,6 +438,19 @@ async def get_menu_detail_admin():
         return {"success" : False, "error" : str(e)}
     
     return {"data" : result}
+
+@menu_router.get(
+    "/admin/overall_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+)
+async def get_data_admin():
+    try:
+
+        result = await do_get_overall_data_for_admin()
+    
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : [result]}
 #-------------------------------------------------------------------------------------------------------
     
 
