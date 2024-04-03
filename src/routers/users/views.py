@@ -8,7 +8,7 @@ from src.exceptions.error_response_exception import ErrorResponseException
 from src.constants.logger import CONSOLE_LOGGER_NAME
 from src.models.order import Menu
 from src.schemas.response import ApiResponse
-from src.auth.auth_bearer import jwt_validator, get_current_user
+from src.auth.auth_bearer import jwt_validator, get_current_user, jwt_validator_admin
 from src.auth.auth_handler import (
     authenticate_user,
     create_access_token,
@@ -83,7 +83,7 @@ async def refresh_token(token : str):
 
 
 @user_router.delete(
-    "/{username}", dependencies=[Depends(jwt_validator)], status_code=status.HTTP_200_OK
+    "/{username}", dependencies=[Depends(jwt_validator_admin)], status_code=status.HTTP_200_OK
 )
 async def delete_user_by_username(username: str) -> dict:
     user = await User.find_one({"username": username})
