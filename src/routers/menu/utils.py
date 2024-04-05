@@ -599,14 +599,14 @@ async def do_delete_order_by_id_v2(order_id : str, current_user : str):
 #-----------------------------------------------------------------/
 
 #----------------------[Do delete food]-----------------------\
-async def do_delete_food_by_id(food_id : str, current_user : str):
+async def do_delete_food_by_id(food_id : str):
     current_food = await Food.find_one(Food.id == ObjectId(food_id))
     if not current_food:
         raise Exception("food not found")
     
-    menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
-    if menu_info.created_by != current_user:
-        raise Exception("Not Menu's author") 
+    # menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
+    # if menu_info.created_by != current_user:
+    #     raise Exception("Not Menu's author") 
 
     
     await current_food.delete()
