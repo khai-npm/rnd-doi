@@ -615,12 +615,13 @@ async def do_delete_food_by_id(food_id : str, current_user : str):
 async def do_delete_menu_by_title_v2(menu_title : str, current_user : str):
     current_menu = await Menu.find_one(Menu.title == menu_title)
     if not current_menu:
-        raise ErrorResponseException(error="current menu not found")
+        raise Exception("current menu not found")
     if current_menu.created_by != current_user:
-        raise ErrorResponseException(error="not Menu's author")
+        raise Exception("not Menu's author")
     menu_food = Food.find(Food.menu_title == current_menu.title)
-    async for data in menu_food:
-        await data.delete()
+    if menu_food:
+        async for data in menu_food:
+            await data.delete()
 
     await current_menu.delete()
 #-----------------------------------------------------------------/

@@ -239,6 +239,8 @@ async def delete_menu_by_title(title: str, current_user:str = Depends(get_curren
 
     except Exception as e:
         return {"success" : False, "error" : str(e)}
+    
+    return {"data" : []}
 
 
 @menu_router.delete(
