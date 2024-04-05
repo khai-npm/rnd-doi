@@ -21,7 +21,8 @@ from src.schemas.order import (
 )
 from src.schemas.admin import (
     AdminMenuDetailSchema,
-    AdminOverallDataSchema
+    AdminOverallDataSchema,
+    AdminOrderStatusDetailSchema
 )
 from src.schemas.food import (
     food_schema,
@@ -855,5 +856,21 @@ async def do_get_overall_data_for_admin():
     return result
 
 #--------------------------------------------------------------------------------------------
+
+#----------------------------------------[Admin - View Order Status]---------------------------------
+async def do_get_overall_order_count():
+    active_order = Order.find(Order.status=="active")
+    closed_order = Order.find(Order.status=="closed")
+    expired_order = Order.find(Order.status=="expired")
+
+    result = AdminOrderStatusDetailSchema(
+        total_order_count= await Order.count(),
+        active_order_count= await active_order.count(),
+        closed_order_count= await closed_order.count(),
+        expired_order_count= await expired_order.count()
+    )
+
+    return result
+#----------------------------------------------------------------------------------------------------
 
 

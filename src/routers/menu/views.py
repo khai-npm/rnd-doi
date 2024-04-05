@@ -428,31 +428,31 @@ async def get_personal_bill_order_by_order_id_and_username(order_id : str, curre
 
 
 #---------------------------------[Admin Only Dashboard function update]--------------------------------
-@menu_router.get(
-    "/admin/menu_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
-)
-async def get_menu_detail_admin():
-    try:
+# @menu_router.get(
+#     "/admin/menu_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+# )
+# async def get_menu_detail_admin():
+#     try:
 
-        result = await do_get_menu_detail_for_admin()
+#         result = await do_get_menu_detail_for_admin()
     
-    except Exception as e:
-        return {"success" : False, "error" : str(e)}
+#     except Exception as e:
+#         return {"success" : False, "error" : str(e)}
     
-    return {"data" : result}
+#     return {"data" : result}
 
-@menu_router.get(
-    "/admin/overall_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
-)
-async def get_data_admin():
-    try:
+# @menu_router.get(
+#     "/admin/overall_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+# )
+# async def get_data_admin():
+#     try:
 
-        result = await do_get_overall_data_for_admin()
+#         result = await do_get_overall_data_for_admin()
     
-    except Exception as e:
-        return {"success" : False, "error" : str(e)}
+#     except Exception as e:
+#         return {"success" : False, "error" : str(e)}
     
-    return {"data" : [result]}
+#     return {"data" : [result]}
 #-------------------------------------------------------------------------------------------------------
     
 
