@@ -21,6 +21,7 @@ from src.schemas.order import (
 )
 from src.schemas.admin import (
     AdminMenuDetailSchema,
+    AdminOverallDataSchema
 )
 from src.schemas.food import (
     food_schema,
@@ -500,13 +501,13 @@ async def get_order_joined(current_user : str):
 #-------------------------------------------------------------------------------------------------------/
 
 #-------------------------[reverse get_my_order]-----------------------
-async def reverse_get_my_order(current_user : str):
+async def reverse_get_my_order(current_user : str, current_area : int):
     result = []
     all_order = Order.find()
     not_result = await get_my_order(current_user)
 
     async for data in all_order:
-        if data.model_dump() not in not_result:
+        if data.model_dump() not in not_result and data.status == "active" and data.area == current_area:
             result.append(data.model_dump())
 
     sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)
@@ -841,3 +842,17 @@ async def do_update_menu_image_by_title(menu_id: str, image : UploadFile):
     
     
 #-------------------------------------------------------------------------------------
+    
+#--------------------------------------[Admin - view data count]-----------------------------
+async def do_get_overall_data_for_admin():
+    result = AdminOverallDataSchema(
+        user_count=await User.count(),
+        food_count=await Food.count(),
+        menu_count=await Menu.count(),
+        order_count=await Order.count()
+    )
+    return result
+
+#--------------------------------------------------------------------------------------------
+
+

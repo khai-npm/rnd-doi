@@ -48,7 +48,8 @@ from src.routers.menu.utils import (
     do_get_menu_detail_for_admin,
     do_update_menu_image_by_title,
     do_update_menu_info_by_title,
-    add_image_to_food
+    add_image_to_food,
+    do_get_overall_data_for_admin
     # get_food_by_menu_from_order
 )
 
@@ -67,7 +68,7 @@ async def up_image(image: UploadFile = File(...)):
 
 
 @menu_router.post(
-    "/create_menu", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+    "/create_menu", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
 )
 async def create_menu(
     request_data: CreateMenuSchema = Depends(CreateMenuSchema.as_form),
@@ -78,7 +79,7 @@ async def create_menu(
     return {"data": [result]}
 
 @menu_router.put(
-    "/update_menu/image" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+    "/update_menu/image" , dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
 )
 async def update_menu_image(id : str = Form(...), image : UploadFile = File(...)):
     try:
@@ -89,7 +90,7 @@ async def update_menu_image(id : str = Form(...), image : UploadFile = File(...)
     return {"data" : []}
 
 @menu_router.put(
-    "/update_menu/" , dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+    "/update_menu/" , dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
 )
 async def update_menu_by_id(id : str = Form(...), new_title : str = Form(...), new_link : str = Form(...)):
     try:
@@ -130,9 +131,9 @@ async def get_order_by_user(current_user:str = Depends(get_current_user), curren
 @menu_router.post(
     "/get_user_order/not_joined", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
-async def get_order_by_user(current_user:str = Depends(get_current_user)):
+async def get_order_by_user(current_user:str = Depends(get_current_user), current_area: int = Depends(get_current_area)):
     await set_expired_order()
-    result = await reverse_get_my_order(current_user)
+    result = await reverse_get_my_order(current_user, current_area)
     return {"data": result}
 #----------------------------------------------
 
@@ -229,7 +230,7 @@ async def add_new_item(request_data: AddNewItemSchema):
     return {"data": [result]}
 
 @menu_router.delete(
-    "/delete_menu/{title}", dependencies=[Depends(jwt_validator)],response_model=ApiResponse
+    "/delete_menu/{title}", dependencies=[Depends(jwt_validator_admin)],response_model=ApiResponse
 )
 async def delete_menu_by_title(title: str, current_user:str = Depends(get_current_user)): 
     try:
@@ -268,7 +269,7 @@ async def delete_order_by_id(order_id: str, current_user:str = Depends(get_curre
 #--------------------[delete food by id - v2]----------------------    
 @menu_router.delete(
     "/delete_food/{food_id}",
-    dependencies=[Depends(jwt_validator)],
+    dependencies=[Depends(jwt_validator_admin)],
      response_model=ApiResponse
 )
 async def delete_food_by_id(food_id: str):
@@ -323,7 +324,7 @@ async def routing_update_order_status(request_data : UpdateOrderStatusSchema, cu
 #-------------------------[NEW FOOD MENU UPDATE]-------------------
 @menu_router.post(
     "/add_new_food",
-    dependencies=[Depends(jwt_validator)],
+    dependencies=[Depends(jwt_validator_admin)],
     response_model=ApiResponse
 )
 
@@ -336,7 +337,7 @@ async def add_food_by_menu(request_data: food_schema = Depends(food_schema.as_fo
 
 @menu_router.put(
     "/add_new_food/image",
-    dependencies=[Depends(jwt_validator)],
+    dependencies=[Depends(jwt_validator_admin)],
     response_model=ApiResponse
 )
 
@@ -437,6 +438,19 @@ async def get_menu_detail_admin():
         return {"success" : False, "error" : str(e)}
     
     return {"data" : result}
+
+@menu_router.get(
+    "/admin/overall_detail", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+)
+async def get_data_admin():
+    try:
+
+        result = await do_get_overall_data_for_admin()
+    
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : [result]}
 #-------------------------------------------------------------------------------------------------------
     
 

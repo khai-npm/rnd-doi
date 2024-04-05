@@ -8,7 +8,7 @@ from src.exceptions.error_response_exception import ErrorResponseException
 from src.constants.logger import CONSOLE_LOGGER_NAME
 from src.models.order import Menu
 from src.schemas.response import ApiResponse
-from src.auth.auth_bearer import jwt_validator, get_current_user
+from src.auth.auth_bearer import jwt_validator, get_current_user, jwt_validator_admin
 from src.auth.auth_handler import (
     authenticate_user,
     create_access_token,
@@ -17,7 +17,7 @@ from src.auth.auth_handler import (
     verify_password
 )
 from src.models.users import User
-from src.schemas.users import UserSchema, UpdateUserSchema, UpdatePasswordSchema
+from src.schemas.users import UserSchema, UpdateUserSchema, UpdatePasswordSchema, AllUserResponseSchema
 from src.routers.menu.utils import upload_img, get_image_of_menu
 from marshmallow.exceptions import ValidationError
 
@@ -59,8 +59,8 @@ async def user_signup(user: UserSchema):
 @user_router.post("/login", status_code=status.HTTP_200_OK)
 async def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_in_db = await User.find_one(User.username == form_data.username)
-    user_in_db = user_in_db.model_dump()
     if user_in_db:
+        user_in_db = user_in_db.model_dump()
         authenticated = authenticate_user(user_in_db, form_data.password)
         if not authenticated:
             raise HTTPException(
@@ -70,7 +70,14 @@ async def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()])
             )
         expires = 1200
         return create_access_token(user_in_db, expires_delta=expires)
-    return {"detail": "User not found"}
+    else:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # return {"detail": "User not found"}
 
 @user_router.post(
         "/refesh_token", status_code=status.HTTP_200_OK
@@ -83,7 +90,7 @@ async def refresh_token(token : str):
 
 
 @user_router.delete(
-    "/{username}", dependencies=[Depends(jwt_validator)], status_code=status.HTTP_200_OK
+    "/{username}", dependencies=[Depends(jwt_validator_admin)], status_code=status.HTTP_200_OK
 )
 async def delete_user_by_username(username: str) -> dict:
     user = await User.find_one({"username": username})
@@ -94,14 +101,19 @@ async def delete_user_by_username(username: str) -> dict:
 
 
 @user_router.post(
-    "/get_all_user", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+    "/get_all_user", dependencies=[Depends(jwt_validator_admin  )], response_model=ApiResponse
 )
 async def get_all_user():
     result = User.find_all()
 
+
     return_data = []
     async for data in result:
-        return_data.append(data.model_dump())
+        return_data.append(AllUserResponseSchema(fullname=data.fullname,
+                                                 username=data.username,
+                                                 area=data.area,
+                                                 role=data.role,
+                                                 img_url=data.img_url))
 
     return {"data": return_data}
 
