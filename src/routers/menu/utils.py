@@ -377,9 +377,9 @@ async def add_new_food(request_data : food_schema, current_user : str):
 async def add_image_to_food(food_id : str, image : UploadFile):
     current_food = await Food.find_one(Food.id == ObjectId(food_id))
     if not current_food:
-        raise Exception("food not found with thisn id")
+        raise Exception("food not found with this id")
 
-    img_name = upload_img(image)
+    img_name = await upload_img(image)
     current_food.image_url = img_name
     await current_food.save()
 
