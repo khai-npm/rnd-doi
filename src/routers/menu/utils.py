@@ -21,7 +21,8 @@ from src.schemas.order import (
 )
 from src.schemas.admin import (
     AdminMenuDetailSchema,
-    AdminOverallDataSchema
+    AdminOverallDataSchema,
+    AdminOrderStatusDetailSchema
 )
 from src.schemas.food import (
     food_schema,
@@ -598,14 +599,14 @@ async def do_delete_order_by_id_v2(order_id : str, current_user : str):
 #-----------------------------------------------------------------/
 
 #----------------------[Do delete food]-----------------------\
-async def do_delete_food_by_id(food_id : str, current_user : str):
+async def do_delete_food_by_id(food_id : str):
     current_food = await Food.find_one(Food.id == ObjectId(food_id))
     if not current_food:
         raise Exception("food not found")
     
-    menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
-    if menu_info.created_by != current_user:
-        raise Exception("Not Menu's author") 
+    # menu_info = await Menu.find_one(Menu.title == current_food.menu_title)
+    # if menu_info.created_by != current_user:
+    #     raise Exception("Not Menu's author") 
 
     
     await current_food.delete()
@@ -855,5 +856,21 @@ async def do_get_overall_data_for_admin():
     return result
 
 #--------------------------------------------------------------------------------------------
+
+#----------------------------------------[Admin - View Order Status]---------------------------------
+async def do_get_overall_order_count():
+    active_order = Order.find(Order.status=="active")
+    closed_order = Order.find(Order.status=="closed")
+    expired_order = Order.find(Order.status=="expired")
+
+    result = AdminOrderStatusDetailSchema(
+        total_order_count= await Order.count(),
+        active_order_count= await active_order.count(),
+        closed_order_count= await closed_order.count(),
+        expired_order_count= await expired_order.count()
+    )
+
+    return result
+#----------------------------------------------------------------------------------------------------
 
 
