@@ -17,7 +17,7 @@ from src.auth.auth_handler import (
     verify_password
 )
 from src.models.users import User
-from src.schemas.users import UserSchema, UpdateUserSchema, UpdatePasswordSchema
+from src.schemas.users import UserSchema, UpdateUserSchema, UpdatePasswordSchema, AllUserResponseSchema
 from src.routers.menu.utils import upload_img, get_image_of_menu
 from marshmallow.exceptions import ValidationError
 
@@ -94,14 +94,19 @@ async def delete_user_by_username(username: str) -> dict:
 
 
 @user_router.post(
-    "/get_all_user", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+    "/get_all_user", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
 )
 async def get_all_user():
     result = User.find_all()
 
+
     return_data = []
     async for data in result:
-        return_data.append(data.model_dump())
+        return_data.append(AllUserResponseSchema(fullname=data.fullname,
+                                                 username=data.username,
+                                                 area=data.area,
+                                                 role=data.role,
+                                                 img_url=data.img_url))
 
     return {"data": return_data}
 

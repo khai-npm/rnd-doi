@@ -21,3 +21,10 @@ class UpdatePasswordSchema(BaseModel):
     old_password : str
     new_password : str
     confirm_password : str
+
+class AllUserResponseSchema(BaseModel):
+    fullname : str
+    username : str
+    area : int
+    role : str
+    img_url : str
