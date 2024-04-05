@@ -59,8 +59,8 @@ async def user_signup(user: UserSchema):
 @user_router.post("/login", status_code=status.HTTP_200_OK)
 async def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_in_db = await User.find_one(User.username == form_data.username)
-    user_in_db = user_in_db.model_dump()
     if user_in_db:
+        user_in_db = user_in_db.model_dump()
         authenticated = authenticate_user(user_in_db, form_data.password)
         if not authenticated:
             raise HTTPException(
@@ -70,7 +70,14 @@ async def user_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()])
             )
         expires = 1200
         return create_access_token(user_in_db, expires_delta=expires)
-    return {"detail": "User not found"}
+    else:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # return {"detail": "User not found"}
 
 @user_router.post(
         "/refesh_token", status_code=status.HTTP_200_OK
@@ -94,7 +101,7 @@ async def delete_user_by_username(username: str) -> dict:
 
 
 @user_router.post(
-    "/get_all_user", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+    "/get_all_user", dependencies=[Depends(jwt_validator_admin  )], response_model=ApiResponse
 )
 async def get_all_user():
     result = User.find_all()
