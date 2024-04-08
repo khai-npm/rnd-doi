@@ -47,7 +47,7 @@ async def user_signup(user: UserSchema):
         # Insert hashed password into DB
         new_user_model.password = get_password_hash(user.password)
         await new_user_model.insert()
-        return new_user_model.model_dump()
+        return ApiResponse(success=True) 
     except ValidationError as e:
         logger.error(f"Fail to create new user: {e}")
         raise ErrorResponseException(**get_error_code(4000112))
@@ -101,7 +101,7 @@ async def delete_user_by_username(username: str) -> dict:
 
 
 @user_router.post(
-    "/get_all_user", dependencies=[Depends(jwt_validator_admin  )], response_model=ApiResponse
+    "/get_all_user", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
 async def get_all_user():
     result = User.find_all()

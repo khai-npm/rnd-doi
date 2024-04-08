@@ -90,5 +90,10 @@ class TotalFoodSchema(BaseModel):
     info : list[FoodDetailSchema]
     total_price : int
 
+#-------------------------------------
+class BillDetailUserSchema(BaseModel):
+    username : str
+    final_price : int
+
     
 
