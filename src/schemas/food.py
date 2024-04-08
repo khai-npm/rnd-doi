@@ -4,7 +4,7 @@ class food_schema(BaseModel):
     food_name : str
     price: int
     ingredients : list = []
-    menu_id : str
+    menu_title : str
 
     @classmethod
     def as_form(cls, food_name: str = Form(...), 

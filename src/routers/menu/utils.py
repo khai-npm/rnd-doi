@@ -345,7 +345,7 @@ async def add_new_food(request_data : food_schema, current_user : str):
 
 
     try:
-        exist_menu = await Menu.find_one(Menu.id == ObjectId(request_data.menu_id))
+        exist_menu = await Menu.find_one(Menu.title == request_data.menu_title)
         if not exist_menu:
             raise ValueError("Menu not exist !")
         
