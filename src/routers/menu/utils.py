@@ -16,7 +16,8 @@ from src.schemas.order import (
     CreateItemSchema,
     UpdateOrderStatusSchema,
     TotalBillSchema, BillDetailSchema,
-    FoodDetailSchema, TotalFoodSchema
+    FoodDetailSchema, TotalFoodSchema,
+    BillDetailUserSchema
     
 )
 from src.schemas.admin import (
@@ -516,9 +517,9 @@ async def reverse_get_my_order(current_user : str, current_area : int):
 #----------------------------------------------------------------------
 
 #---------------[get food by menu title]---------------------
-async def get_food_by_menu_title(request_title: str):
+async def get_food_by_menu_id(request_id: str):
     return_data = []
-    result = Food.find({"menu_title" : request_title})
+    result = Food.find(Food.id == ObjectId(request_id))
     if result:
         async for data in result:
             return_data.append(data.model_dump())
@@ -613,8 +614,8 @@ async def do_delete_food_by_id(food_id : str):
 #-----------------------------------------------------------------/
     
 #----------------------[Do delete menu by title =ver2=]-----------------------\
-async def do_delete_menu_by_title_v2(menu_title : str, current_user : str):
-    current_menu = await Menu.find_one(Menu.title == menu_title)
+async def do_delete_menu_by_title_v2(menu_id : str, current_user : str):
+    current_menu = await Menu.find_one(Menu.id == ObjectId(menu_id))
     if not current_menu:
         raise Exception("current menu not found")
     if current_menu.created_by != current_user:
@@ -792,6 +793,28 @@ async def do_get_personal_bill_order_by_order_id_and_username(order_id : str, us
 
 
 #----------------------------------------------------------------------------------/
+
+
+#--------------------------------[Get total bill by user list]--------------------------
+async def do_get_total_bill_per_user_list(order_id : str):
+    current_order = await Order.find_one(Order.id == ObjectId(order_id))
+    if not current_order:
+        raise Exception("order not found with this id")
+    item_list = current_order.item_list
+    duplicate_user = []
+    result : list[BillDetailUserSchema] = []
+    for data in item_list:
+        if data.created_by not in duplicate_user:
+            add_user = BillDetailUserSchema(username=data.created_by, final_price=data.price * data.quantity)
+            result.append(add_user)
+            duplicate_user.append(data.created_by)
+        else:
+            pos = [x.username for x in result].index(data.created_by)
+            result[pos].final_price = result[pos].final_price + data.price * data.quantity
+
+
+    return result
+#---------------------------------------------------------------------------------------
 
 
 #------------------------------[Get Menu Detail - admin ver]---------------------

@@ -27,7 +27,7 @@ from src.routers.menu.utils import (
     add_new_item_to_order_by_id,
     add_new_food,
     get_all_food,
-    get_food_by_menu_title,
+    get_food_by_menu_id,
     add_new_item_v3,
     do_get_order_by_id,
     do_get_food_by_order_id,
@@ -49,7 +49,8 @@ from src.routers.menu.utils import (
     do_update_menu_image_by_title,
     do_update_menu_info_by_title,
     add_image_to_food,
-    do_get_overall_data_for_admin
+    do_get_overall_data_for_admin,
+    do_get_total_bill_per_user_list
     # get_food_by_menu_from_order
 )
 
@@ -230,12 +231,12 @@ async def add_new_item(request_data: AddNewItemSchema):
     return {"data": [result]}
 
 @menu_router.delete(
-    "/delete_menu/{title}", dependencies=[Depends(jwt_validator_admin)],response_model=ApiResponse
+    "/delete_menu/{id}", dependencies=[Depends(jwt_validator_admin)],response_model=ApiResponse
 )
-async def delete_menu_by_title(title: str, current_user:str = Depends(get_current_user)): 
+async def delete_menu_by_title(id: str, current_user:str = Depends(get_current_user)): 
     try:
 
-        await do_delete_menu_by_title_v2(title, current_user)
+        await do_delete_menu_by_title_v2(id, current_user)
 
     except Exception as e:
         return {"success" : False, "error" : str(e)}
@@ -359,7 +360,7 @@ async def get_food():
 
 @menu_router.post("/get_food_by_menu", dependencies=[Depends(jwt_validator)])
 async def get_food(menu_title : str):
-    result = await get_food_by_menu_title(menu_title)
+    result = await get_food_by_menu_id(menu_title)
 
     return {"data" : result}
 
@@ -404,6 +405,17 @@ async def get_food_bill_order_by_order_id(order_id : str):
     return {"data" : [result]}
 
 @menu_router.get(
+    "/get_user_order/{order_id}/bill/user", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
+)
+async def get_total_bill_per_user_list(order_id: str):
+    try:
+        result = await do_get_total_bill_per_user_list(order_id)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
+    
+    return {"data" : result}
+
+@menu_router.get(
     "/get_user_order/{order_id}/bill/{username}", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
 async def get_personal_bill_order_by_order_id_and_username(order_id : str, username : str):
@@ -424,6 +436,9 @@ async def get_personal_bill_order_by_order_id_and_username(order_id : str, curre
         return {"success" : False, "error" : str(e)}
     
     return {"data" : [result]}
+
+
+
 #---------------------------------------------------------------------------------------------------
 
 
