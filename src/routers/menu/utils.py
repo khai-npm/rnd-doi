@@ -519,7 +519,8 @@ async def reverse_get_my_order(current_user : str, current_area : int):
 #---------------[get food by menu title]---------------------
 async def get_food_by_menu_id(request_id: str):
     return_data = []
-    result = Food.find(Food.id == ObjectId(request_id))
+    current_menu = await Menu.find_one(Menu.id == ObjectId(request_id))
+    result = Food.find(Food.menu_title == current_menu.title)
     if result:
         async for data in result:
             return_data.append(data.model_dump())
