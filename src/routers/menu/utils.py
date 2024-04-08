@@ -345,7 +345,7 @@ async def add_new_food(request_data : food_schema, current_user : str):
 
 
     try:
-        exist_menu = await Menu.find_one({"title" : request_data.menu_title})
+        exist_menu = await Menu.find_one(Menu.id == ObjectId(request_data.menu_id))
         if not exist_menu:
             raise ValueError("Menu not exist !")
         
@@ -353,7 +353,7 @@ async def add_new_food(request_data : food_schema, current_user : str):
         #     raise ValueError("Not Menu's author")
 
         exist_food = await Food.find_one({"food_name" : request_data.food_name,
-                                          "menu_title" : request_data.menu_title})
+                                          "menu_title" : exist_menu.title})
         if exist_food:
             raise ValueError("food already exist !")
         # img_url = await upload_img(img)
@@ -361,7 +361,7 @@ async def add_new_food(request_data : food_schema, current_user : str):
         food_name= request_data.food_name,
         price=request_data.price,
         ingredients= request_data.ingredients,
-        menu_title=request_data.menu_title,
+        menu_title=exist_menu.title,
         image_url=""
     )
         await new_food.insert()
