@@ -315,13 +315,16 @@ async def routing_get_user_image_by_order_id(order_id : str):
 @menu_router.put(
         "/update_order/status/", dependencies=[Depends(jwt_validator)], response_model=ApiResponse
 )
-async def routing_update_order_status(request_data : UpdateOrderStatusSchema, current_user:str = Depends(get_current_user)):
+async def routing_update_order_status(
+        request_data: UpdateOrderStatusSchema,
+        current_user: str = Depends(get_current_user)
+    ):
     try:
         result = await update_order_status(request_data, current_user)
 
     except Exception as e:
-        return {"success" : False, "error" : str(e)}
-    return {"data" : [result]}
+        return {"success": False, "error": str(e)}
+    return {"data": [result]}
 
 
 #-------------------------[NEW FOOD MENU UPDATE]-------------------

@@ -358,6 +358,9 @@ async def add_new_food(request_data : food_schema, current_user : str):
         if not exist_menu:
             raise ValueError("Menu not exist !")
         
+        if request_data.price < 0:
+            raise Exception("price must be not a negative number")
+        
         # if exist_menu.created_by != current_user:
         #     raise ValueError("Not Menu's author")
 
@@ -746,6 +749,8 @@ async def do_get_total_bill_order_by_order_id(order_id : str):
         result.info.append(current_item)
         result.total_price = result.total_price + current_item.final_price
 
+        
+    result.info.sort(key=lambda x : x.username)
     return result
 
 #----------------------------------------------------------------------------------/
