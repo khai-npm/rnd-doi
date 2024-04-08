@@ -359,8 +359,8 @@ async def get_food():
 
 
 @menu_router.post("/get_food_by_menu", dependencies=[Depends(jwt_validator)])
-async def get_food(menu_title : str):
-    result = await get_food_by_menu_id(menu_title)
+async def get_food(menu_id : str):
+    result = await get_food_by_menu_id(menu_id)
 
     return {"data" : result}
 
