@@ -27,7 +27,7 @@ from src.routers.menu.utils import (
     add_new_item_to_order_by_id,
     add_new_food,
     get_all_food,
-    get_food_by_menu_title,
+    get_food_by_menu_id,
     add_new_item_v3,
     do_get_order_by_id,
     do_get_food_by_order_id,
@@ -360,7 +360,7 @@ async def get_food():
 
 @menu_router.post("/get_food_by_menu", dependencies=[Depends(jwt_validator)])
 async def get_food(menu_title : str):
-    result = await get_food_by_menu_title(menu_title)
+    result = await get_food_by_menu_id(menu_title)
 
     return {"data" : result}
 
