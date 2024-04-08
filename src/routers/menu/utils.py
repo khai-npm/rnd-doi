@@ -102,6 +102,9 @@ async def create_new_order(request_data: CreateOrderSchema, current_user: str):
         raise ErrorResponseException(**get_error_code(4000107))
 
     # item_list_as_dict = [item.model_dump() for item in request_data.item_list]
+    if request_data.order_date <= datetime.datetime.now():
+        raise ErrorResponseException(**get_error_code(4000107))
+
 
     new_order = Order(
         created_by=current_user,
@@ -246,12 +249,18 @@ async def add_new_item_to_order_by_id(request_data: AddNewItemByOrderIDSchema, c
     
     if current_order.status=="expired" or current_order.status=="closed":
         raise ErrorResponseException("cannot add item for closed Order topic")
-    
+        
 
     
     current_item_list = current_order.item_list
     if len(request_data.new_item)!=0:
         for item in request_data.new_item:
+            if item.quantity < 1:
+                raise ErrorResponseException("cannot add negative quantity!")
+
+        for item in request_data.new_item:
+
+            
 
             check_exist = await ItemOrder.find_one({"order_id" : request_data.order_id,
                                                     "order_for": item.order_for,
@@ -533,6 +542,7 @@ async def get_food_by_menu_id(request_id: str):
 #--------[add new Item v3 (with food update)]----------------   
 
 async def add_new_item_v3(current_user : str, request_data : AddNewItemSchemaV3):
+
     item_list = []
     food_list = request_data.new_items
     for data in food_list:
