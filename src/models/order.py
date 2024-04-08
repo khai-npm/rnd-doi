@@ -36,8 +36,9 @@ class Order(Document):
     menu: str
     area: int
     share: bool
-    order_date: datetime
+    order_date: datetime   
     item_list: list[Item]
+    tags : list[str]
 
     class Settings:
         name = "order"
