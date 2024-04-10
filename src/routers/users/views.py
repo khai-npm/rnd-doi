@@ -1,3 +1,4 @@
+import datetime
 from typing import Annotated
 import logging
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -42,7 +43,9 @@ async def user_signup(user: UserSchema):
             raise ValidationError("area not exist !")
         new_user_model = User(
             fullname=user.fullname, username=user.username, password=user.password,
-            role="user", area=user.area, img_url=""
+            role="user", area=user.area, img_url="",
+            join_date=datetime.datetime.now(),
+            email=""
         )
         # Insert hashed password into DB
         new_user_model.password = get_password_hash(user.password)
@@ -112,6 +115,8 @@ async def get_all_user():
         return_data.append(AllUserResponseSchema(fullname=data.fullname,
                                                  username=data.username,
                                                  area=data.area,
+                                                 email=data.email,
+                                                 join_date=data.join_date,
                                                  role=data.role,
                                                  img_url=data.img_url))
 
