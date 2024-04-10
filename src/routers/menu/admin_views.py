@@ -68,7 +68,9 @@ async def get_all_user():
                                                  username=data.username,
                                                  area=data.area,
                                                  role=data.role,
-                                                 img_url=data.img_url))
+                                                 img_url=data.img_url,
+                                                 join_date=data.join_date,
+                                                 email=data.email))
 
     return {"data": return_data}
 

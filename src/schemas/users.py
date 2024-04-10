@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import Form
 from pydantic import BaseModel, field_validator
 
@@ -25,6 +26,8 @@ class UpdatePasswordSchema(BaseModel):
 class AllUserResponseSchema(BaseModel):
     fullname : str
     username : str
+    email : str
+    join_date : datetime
     area : int
     role : str
     img_url : str
