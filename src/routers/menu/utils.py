@@ -103,8 +103,8 @@ async def create_new_order(request_data: CreateOrderSchema, current_user: str):
         raise ErrorResponseException(**get_error_code(4000107))
 
     # item_list_as_dict = [item.model_dump() for item in request_data.item_list]
-    if request_data.order_date <= datetime.datetime.now():
-        raise ErrorResponseException(**get_error_code(4000107))
+    # if datetime(request_data.order_date) <= datetime.datetime.now():
+    #     raise ErrorResponseException(**get_error_code(4000107))
 
 
     new_order = Order(
