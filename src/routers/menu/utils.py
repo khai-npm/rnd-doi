@@ -31,6 +31,7 @@ from src.schemas.food import (
     ItemV3
     
 )
+from src.auth.auth_handler import get_password_hash
 from src.models.order import Menu, Order, ItemOrder, UserOrder, Item
 from src.models.users import User
 from src.models.food import Food
@@ -102,6 +103,9 @@ async def create_new_order(request_data: CreateOrderSchema, current_user: str):
         raise ErrorResponseException(**get_error_code(4000107))
 
     # item_list_as_dict = [item.model_dump() for item in request_data.item_list]
+    # if datetime(request_data.order_date) <= datetime.datetime.now():
+    #     raise ErrorResponseException(**get_error_code(4000107))
+
 
     new_order = Order(
         created_by=current_user,
@@ -246,12 +250,18 @@ async def add_new_item_to_order_by_id(request_data: AddNewItemByOrderIDSchema, c
     
     if current_order.status=="expired" or current_order.status=="closed":
         raise ErrorResponseException("cannot add item for closed Order topic")
-    
+        
 
     
     current_item_list = current_order.item_list
     if len(request_data.new_item)!=0:
         for item in request_data.new_item:
+            if item.quantity < 1:
+                raise ErrorResponseException("cannot add negative quantity!")
+
+        for item in request_data.new_item:
+
+            
 
             check_exist = await ItemOrder.find_one({"order_id" : request_data.order_id,
                                                     "order_for": item.order_for,
@@ -349,6 +359,9 @@ async def add_new_food(request_data : food_schema, current_user : str):
         if not exist_menu:
             raise ValueError("Menu not exist !")
         
+        if request_data.price < 0:
+            raise Exception("price must be not a negative number")
+        
         # if exist_menu.created_by != current_user:
         #     raise ValueError("Not Menu's author")
 
@@ -428,6 +441,31 @@ async def get_all_food():
 
 
 #------------------------[get order by - order's owner & order's participants]--------------------------\
+async def get_my_order_v2(current_user : str):
+    result= []
+    order_list = Order.find({"created_by" : current_user,
+                             "status" : {"$ne": "expired"}})
+    async for data in order_list:
+        result.append(data.model_dump())
+
+    order_list2 = Order.find({"created_by" : {"$ne": current_user},
+                              "status" : {"$ne": "expired"}})
+    async for data in order_list2:
+        dup_list = []
+        item_list : Item = []
+        item_list = data.item_list
+        for item_data in item_list:
+            if item_data.created_by == current_user:
+                result.append(data.model_dump())
+                break
+
+    sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)
+
+
+    return sorted_result
+
+
+
 async def get_my_order(current_user : str):
     result= []
     order_list = Order.find({"created_by" : current_user})
@@ -485,7 +523,8 @@ async def get_order_created(current_user : str):
 
 async def get_order_joined(current_user : str):
     result = []
-    order_list2 = Order.find({"created_by" : {"$ne": current_user}})
+    order_list2 = Order.find({"created_by" : {"$ne": current_user},
+                              "status" : {"$ne": "expired"}})
     async for data in order_list2:
         dup_list = []
         item_list : Item = []
@@ -533,6 +572,7 @@ async def get_food_by_menu_id(request_id: str):
 #--------[add new Item v3 (with food update)]----------------   
 
 async def add_new_item_v3(current_user : str, request_data : AddNewItemSchemaV3):
+
     item_list = []
     food_list = request_data.new_items
     for data in food_list:
@@ -736,6 +776,8 @@ async def do_get_total_bill_order_by_order_id(order_id : str):
         result.info.append(current_item)
         result.total_price = result.total_price + current_item.final_price
 
+        
+    result.info.sort(key=lambda x : x.username)
     return result
 
 #----------------------------------------------------------------------------------/
@@ -896,5 +938,18 @@ async def do_get_overall_order_count():
 
     return result
 #----------------------------------------------------------------------------------------------------
+
+#--------------------------------------[Admin - reset password]----------------------------------
+async def do_admin_reset_password(username : str):
+    get_user = await User.find_one(User.username == username)
+    if not get_user:
+        raise Exception("user not found with this username !")
+    
+    get_user.password = get_password_hash("123")
+    await get_user.save()
+    
+    
+    
+#------------------------------------------------------------------------------------------------
 
 
