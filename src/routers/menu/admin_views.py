@@ -1,9 +1,10 @@
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 
 from src.auth.auth_bearer import jwt_validator_admin
 from src.models.users import User
 from src.routers.menu.utils import (
+    do_admin_reset_password,
     do_get_menu_detail_for_admin,
     do_get_overall_data_for_admin,
     do_get_overall_order_count,
@@ -84,4 +85,14 @@ async def get_food():
 async def get_all_menu():
     result = await get_menu()
     return {"data": result}
+
+@admin_router.put(
+    "/reset_password", dependencies=[Depends(jwt_validator_admin)], response_model=ApiResponse
+)
+async def admin_reset_password(username : str = Form(...)):
+    try:
+        await do_admin_reset_password(username)
+    except Exception as e:
+        return {"success" : False, "error" : str(e)}
     
+    return {"data" : []}

@@ -31,6 +31,7 @@ from src.schemas.food import (
     ItemV3
     
 )
+from src.auth.auth_handler import get_password_hash
 from src.models.order import Menu, Order, ItemOrder, UserOrder, Item
 from src.models.users import User
 from src.models.food import Food
@@ -911,5 +912,18 @@ async def do_get_overall_order_count():
 
     return result
 #----------------------------------------------------------------------------------------------------
+
+#--------------------------------------[Admin - reset password]----------------------------------
+async def do_admin_reset_password(username : str):
+    current_user = await User.find_one(User.username == username)
+    if not current_user:
+        raise Exception("user not found with this username !")
+    
+    current_user.password = get_password_hash("123")
+    await current_user.save()
+    
+    
+    
+#------------------------------------------------------------------------------------------------
 
 
