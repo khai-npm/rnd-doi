@@ -441,6 +441,31 @@ async def get_all_food():
 
 
 #------------------------[get order by - order's owner & order's participants]--------------------------\
+async def get_my_order_v2(current_user : str):
+    result= []
+    order_list = Order.find({"created_by" : current_user,
+                             "status" : {"$ne": "expired"}})
+    async for data in order_list:
+        result.append(data.model_dump())
+
+    order_list2 = Order.find({"created_by" : {"$ne": current_user},
+                              "status" : {"$ne": "expired"}})
+    async for data in order_list2:
+        dup_list = []
+        item_list : Item = []
+        item_list = data.item_list
+        for item_data in item_list:
+            if item_data.created_by == current_user:
+                result.append(data.model_dump())
+                break
+
+    sorted_result = sorted(result, key=itemgetter('created_at'), reverse=True)
+
+
+    return sorted_result
+
+
+
 async def get_my_order(current_user : str):
     result= []
     order_list = Order.find({"created_by" : current_user})
@@ -498,7 +523,8 @@ async def get_order_created(current_user : str):
 
 async def get_order_joined(current_user : str):
     result = []
-    order_list2 = Order.find({"created_by" : {"$ne": current_user}})
+    order_list2 = Order.find({"created_by" : {"$ne": current_user},
+                              "status" : {"$ne": "expired"}})
     async for data in order_list2:
         dup_list = []
         item_list : Item = []

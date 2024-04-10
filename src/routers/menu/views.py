@@ -19,6 +19,7 @@ from src.models.food import Food
 from src.routers.menu.utils import (
     create_new_menu,
     create_new_order,
+    get_my_order_v2,
     get_order,
     get_order_v2,
     get_menu,
@@ -165,7 +166,7 @@ async def get_food_by_order_id(order_id : str):
 )
 async def routing_get_my_order(current_user:str = Depends(get_current_user)):
     await set_expired_order()
-    result = await get_my_order(current_user)
+    result = await get_my_order_v2(current_user)
     return {"data" : result}
 #------------------------------------------------
 
