@@ -915,12 +915,12 @@ async def do_get_overall_order_count():
 
 #--------------------------------------[Admin - reset password]----------------------------------
 async def do_admin_reset_password(username : str):
-    current_user = await User.find_one(User.username == username)
-    if not current_user:
+    get_user = await User.find_one(User.username == username)
+    if not get_user:
         raise Exception("user not found with this username !")
     
-    current_user.password = get_password_hash("123")
-    await current_user.save()
+    get_user.password = get_password_hash("123")
+    await get_user.save()
     
     
     
